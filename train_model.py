@@ -15,7 +15,7 @@ np.random.shuffle(indices)
 train_indices, test_indices = indices[split:], indices[:split]
 train_sampler = SubsetRandomSampler(train_indices)
 test_sampler = SubsetRandomSampler(test_indices)
-train_loader = DataLoader(dataset, batch_size=5, sampler=train_sampler)
+train_loader = DataLoader(dataset, batch_size=4, sampler=train_sampler)
 test_loader = DataLoader(dataset, batch_size=1, sampler=test_sampler)
 print("Number of training/test patches:", (len(train_indices),len(test_indices)))
 
@@ -24,6 +24,9 @@ net.to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=1e-4, weight_decay=0)
 epochs = 10
 for epoch in range(epochs):
+    elbos = []
+    regs = []
+    losses = []
     for step, (patch, mask, _) in enumerate(train_loader): 
         patch = patch.to(device)
         mask = mask.to(device)
@@ -35,3 +38,13 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        losses.append(loss.item())
+        elbos.append(elbo.item())
+        regs.append(reg_loss.item())
+
+        if step % 100 == 0:
+            print("Epoch", epoch, "Step", step, "/", len(train_loader), "ELBO", np.mean(elbos), "Reg", np.mean(regs), "Loss", np.mean(losses))
+
+            # Save the model
+            torch.save(net.state_dict(), 'model.pth')

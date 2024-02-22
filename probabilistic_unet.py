@@ -274,7 +274,7 @@ class ProbabilisticUnet(nn.Module):
         self.reconstruction = self.reconstruct(use_posterior_mean=reconstruct_posterior_mean, calculate_posterior=False, z_posterior=z_posterior)
         
         reconstruction_loss = criterion(input=self.reconstruction, target=segm)
-        self.reconstruction_loss = torch.sum(reconstruction_loss)
+        self.reconstruction_loss = reconstruction_loss.sum(-1).sum(-1).sum(-1).mean()
         self.mean_reconstruction_loss = torch.mean(reconstruction_loss)
 
         return -(self.reconstruction_loss + self.beta * self.kl)
